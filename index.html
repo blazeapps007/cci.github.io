@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigating Cryptocurrency-Based Corruption </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Slate Gray & Amber -->
+    <!-- Application Structure Plan: The SPA is designed as a vertical-scrolling narrative, guiding the user through a logical investigative flow. It starts with foundational knowledge ("Crypto Basics"), moves to the specific crime ("The Laundering Scheme"), details the response ("The Investigation"), presents a detailed strategy ("Investigation Strategy"), and concludes with the context ("Legal Framework"). This structure was chosen over a dashboard to create a story-driven learning path, making the complex information more digestible for investigators who might be new to crypto. Navigation is handled by a sticky top bar, allowing users to jump to any section easily. Interactive elements like clickable diagrams and comparison charts are embedded within each section to encourage exploration and reinforce learning. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Consensus Mechanisms (PoW, PoS, DPoS). Goal: Compare. Viz/Method: Bar Chart (Chart.js). Interaction: Hover for details. Justification: A bar chart provides a clear visual comparison of the energy and decentralization trade-offs, which is a key concept.
+        - Report Info: Native Assets vs. Tokens. Goal: Differentiate. Viz/Method: Interactive Cards (HTML/CSS/JS). Interaction: Click to flip and reveal details. Justification: This tactile interaction helps solidify the distinction between the two core asset types.
+        - Report Info: Money Laundering Process. Goal: Organize/Show Flow. Viz/Method: HTML/CSS Flowchart. Interaction: Hover over steps to highlight connections and read descriptions. Justification: A visual flowchart is the most intuitive way to explain a multi-step process like smurfing and consolidation. It's more engaging than a simple list.
+        - Report Info: Investigative Process. Goal: Organize/Inform. Viz/Method: Tabbed content sections (HTML/CSS/JS). Interaction: Click tabs to switch between investigative methods (Sting Ops, Exchange Collab, etc.). Justification: Tabs organize the different investigative techniques cleanly, preventing information overload and allowing the user to focus on one method at a time.
+        - Report Info: Investigation Strategy. Goal: Detail a strategic flow. Viz/Method: Advanced HTML/CSS Flow Diagram. Interaction: Hover effects on nodes. Justification: This new diagram provides a clear, actionable intelligence-led policing model, starting from the middle ("smurfs") and tracing both up and down the money trail, as requested.
+        - Library/Method: Chart.js for the bar chart. Vanilla JS for all other interactions (tabs, card flips, flowchart highlights, navigation).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link.active {
+            color: #f59e0b; /* amber-500 */
+            border-bottom: 2px solid #f59e0b;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .flowchart-step, .strategy-node {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .flowchart-step:hover, .strategy-node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .card-container {
+            perspective: 1000px;
+        }
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .card-face-front {
+            background-color: #334155; /* slate-700 */
+            color: white;
+        }
+        .card-face-back {
+            background-color: #475569; /* slate-600 */
+            color: white;
+            transform: rotateY(180deg);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <header class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-amber-400">Crypto Corruption Investigation</h1>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#intro" class="nav-link font-medium pb-1">Basics</a>
+                <a href="#scheme" class="nav-link font-medium pb-1">The Scheme</a>
+                <a href="#investigation" class="nav-link font-medium pb-1">Investigation</a>
+                <a href="#strategy" class="nav-link font-medium pb-1">Strategy</a>
+                <a href="#legal" class="nav-link font-medium pb-1">Legal Framework</a>
+            </nav>
+            <div class="md:hidden">
+                <select id="mobile-nav" class="bg-slate-700 text-white rounded p-2">
+                    <option value="#intro">Basics</option>
+                    <option value="#scheme">The Scheme</option>
+                    <option value="#investigation">Investigation</option>
+                    <option value="#strategy">Strategy</option>
+                    <option value="#legal">Legal Framework</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="intro" class="py-12">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">Cryptocurrency Fundamentals</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">This section provides the foundational knowledge required to understand cryptocurrency. We will cover what it is, the different types you may encounter, the technology that powers it, and the critical distinction between native assets (coins) and tokens.</p>
+
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-amber-500">What is Cryptocurrency?</h3>
+                    <p class="mb-4">A digital or virtual currency that uses cryptography for security. It operates independently of a central bank or government (decentralized).</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">&#9679;</span> <div><strong class="text-slate-700">Digital:</strong> Exists only in digital form.</div></li>
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">&#9679;</span> <div><strong class="text-slate-700">Encrypted:</strong> Secured by complex cryptographic techniques.</div></li>
+                        <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">&#9679;</span> <div><strong class="text-slate-700">Peer-to-Peer:</strong> Transactions occur directly between users.</div></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-amber-500">Common Types</h3>
+                     <p class="mb-4">Illicit actors may use various types of cryptocurrencies for different purposes. Understanding them is key.</p>
+                    <ul class="space-y-2">
+                        <li><strong>Payment Coins:</strong> For value transfer (e.g., Bitcoin, Litecoin).</li>
+                        <li><strong>Stablecoins:</strong> To avoid volatility by pegging to fiat (e.g., USDT, USDC). Often used in laundering.</li>
+                        <li><strong>Privacy Coins:</strong> To obscure transaction details (e.g., Monero, Zcash).</li>
+                        <li><strong>Meme Coins:</strong> Highly volatile, community-driven (e.g., Dogecoin).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-2xl font-bold text-center mb-4 text-amber-500">Consensus Mechanisms: PoW vs. PoS</h3>
+                <p class="text-center max-w-2xl mx-auto text-slate-600 mb-6">This chart compares the two main technologies that validate transactions. The trade-offs between them can influence which blockchain a criminal might use.</p>
+                <div class="chart-container">
+                    <canvas id="consensusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <h3 class="text-2xl font-bold text-center mb-4 text-amber-500">Native Assets (Coins) vs. Tokens</h3>
+                <p class="text-center max-w-3xl mx-auto text-slate-600 mb-8">This is a crucial distinction. A coin is native to its blockchain, while a token is built on top of an existing one. Click the cards to learn more.</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card-container h-64">
+                        <div class="card">
+                            <div class="card-face card-face-front">
+                                <h4 class="text-2xl font-bold">Native Chain Asset (Coin)</h4>
+                                <p class="mt-2">(e.g., BTC, ETH)</p>
+                            </div>
+                            <div class="card-face card-face-back">
+                                <p>The primary currency of a blockchain. Used to pay for network transaction fees ("gas") and to secure the network. Each blockchain has only one native coin.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-container h-64">
+                        <div class="card">
+                            <div class="card-face card-face-front">
+                                <h4 class="text-2xl font-bold">Token</h4>
+                                <p class="mt-2">(e.g., USDT, SHIB)</p>
+                            </div>
+                            <div class="card-face card-face-back">
+                                <p>Represents an asset or utility built on an existing blockchain (like Ethereum). Thousands of different tokens can exist on a single blockchain.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-300">
+
+        <section id="scheme" class="py-12">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">The Laundering Scheme: How TargetX Operates</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">This section visualizes the step-by-step process used by TargetX to launder illicit funds. The method involves breaking down large sums of cash and funneling them through a network of individuals using peer-to-peer (P2P) crypto exchanges. Hover over each step to see more details.</p>
+            <div class="relative p-8">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 md:space-x-4">
+                    <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                        <div class="text-3xl mb-2">1</div>
+                        <h4 class="font-bold text-lg">Illicit Funds</h4>
+                        <p class="text-sm text-slate-600">TargetX receives a large sum of cash from corrupt activities.</p>
+                    </div>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">&rarr;</div>
+                    <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                        <div class="text-3xl mb-2">2</div>
+                        <h4 class="font-bold text-lg">Agent Network</h4>
+                        <p class="text-sm text-slate-600">Cash is given to a trusted agent for distribution.</p>
+                    </div>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">&rarr;</div>
+                    <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                         <div class="text-3xl mb-2">3</div>
+                        <h4 class="font-bold text-lg">"Smurfing"</h4>
+                        <p class="text-sm text-slate-600">Agent breaks cash into small amounts for hundreds of "smurfs".</p>
+                    </div>
+                </div>
+                 <div class="flex justify-center my-8">
+                    <div class="text-2xl text-amber-500 font-bold transform rotate-90 md:rotate-0">&darr;</div>
+                </div>
+                <div class="flex flex-col-reverse md:flex-row justify-between items-center space-y-8 md:space-y-0 md:space-x-4 space-y-reverse">
+                    <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                        <div class="text-3xl mb-2">6</div>
+                        <h4 class="font-bold text-lg">Consolidation</h4>
+                        <p class="text-sm text-slate-600">Crypto is sent from smurfs to wallets controlled by TargetX.</p>
+                    </div>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">&larr;</div>
+                     <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                        <div class="text-3xl mb-2">5</div>
+                        <h4 class="font-bold text-lg">Conversion</h4>
+                        <p class="text-sm text-slate-600">Smurfs convert NPR to crypto (USDT, BTC) via P2P trades.</p>
+                    </div>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">&larr;</div>
+                     <div class="flowchart-step text-center bg-white p-4 rounded-lg shadow-lg w-full md:w-1/4">
+                        <div class="text-3xl mb-2">4</div>
+                        <h4 class="font-bold text-lg">P2P Transactions</h4>
+                        <p class="text-sm text-slate-600">Each smurf makes trades under 50k NPR to avoid suspicion.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-300">
+
+        <section id="investigation" class="py-12">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">The Investigative Process</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">Tracing and prosecuting this type of crime requires a multi-faceted approach. This section outlines the key investigative techniques. Click on each tab to explore the different methods law enforcement can employ to dismantle TargetX's network.</p>
+            
+            <div class="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+                <div class="border-b border-slate-200">
+                    <nav class="flex -mb-px" aria-label="Tabs">
+                        <button class="tab-btn active w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-amber-500 text-amber-600" data-tab="tab1">Sting Operations</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300" data-tab="tab2">Exchange Collaboration</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300" data-tab="tab3">Banking Analysis</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300" data-tab="tab4">Blockchain Analysis</button>
+                    </nav>
+                </div>
+                <div class="p-6 md:p-8">
+                    <div id="tab1" class="tab-content active">
+                        <h4 class="text-xl font-bold mb-2">Undercover P2P Trades</h4>
+                        <p class="text-slate-600">Law enforcement can pose as buyers or sellers in P2P markets. The goal is to directly interact with the "smurfs" to gather intelligence, identify their payment methods, and link their online personas to real-world banking information. This is a crucial first step in unmasking the lower-level operatives.</p>
+                    </div>
+                    <div id="tab2" class="tab-content">
+                        <h4 class="text-xl font-bold mb-2">Leveraging Exchange Data</h4>
+                        <p class="text-slate-600">Submit official legal requests to exchanges like Binance, MEXC, and Poloniex for user data. This includes KYC (Know Your Customer) information, which can provide names, addresses, and official documents. Transaction histories from the exchange can help map the entire network of smurfs and identify the consolidation wallets.</p>
+                    </div>
+                    <div id="tab3" class="tab-content">
+                        <h4 class="text-xl font-bold mb-2">Following the Fiat Trail</h4>
+                        <p class="text-slate-600">Collaborate with the Nepal Rastra Bank (NRB) to analyze bank records of suspected smurfs. Investigators should look for patterns, such as many small, unrelated deposits followed by immediate transfers out to individuals identified through P2P trades. This links the digital smurfing activity to the traditional financial system.</p>
+                    </div>
+                    <div id="tab4" class="tab-content">
+                        <h4 class="text-xl font-bold mb-2">On-Chain Forensics</h4>
+                        <p class="text-slate-600">Use specialized blockchain analysis tools (e.g., Chainalysis, Elliptic) to trace the flow of cryptocurrency. Starting from the smurfs' deposit addresses on exchanges, investigators can follow the funds as they move to consolidation wallets and ultimately to the final wallets controlled by TargetX. This provides immutable, court-admissible evidence of the money trail.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-300">
+
+        <section id="strategy" class="py-12">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">Investigation Strategy: From Smurf to Source & Settlement</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">This strategic flow diagram illustrates how to dismantle the entire criminal operation by starting with the most accessible link: the P2P "smurfs". From this central point, the investigation branches in two directions simultaneously: tracing the crypto upstream to the corrupt source (TargetX) and downstream to the liquidators who convert the crypto back into clean money.</p>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="text-center mb-8">
+                    <div class="strategy-node inline-block bg-slate-200 p-4 rounded-lg shadow">
+                        <h4 class="font-bold text-lg">ENTRY POINT: Identify P2P Smurfs</h4>
+                        <p class="text-sm text-slate-600">(Via Sting Ops, Exchange Monitoring)</p>
+                    </div>
+                </div>
+                <div class="flex justify-center mb-8">
+                    <div class="text-2xl text-amber-500 font-bold">&darr;</div>
+                </div>
+                <div class="text-center mb-8">
+                    <div class="strategy-node inline-block bg-amber-100 border-2 border-amber-500 p-4 rounded-lg shadow-xl">
+                        <h4 class="font-bold text-lg">HUB: Analyze the Smurf</h4>
+                        <p class="text-sm text-slate-600">(KYC Data, Bank Records, On-Chain Activity)</p>
+                    </div>
+                </div>
+                <div class="flex justify-center items-center mb-4">
+                    <div class="w-1/2 border-t-2 border-slate-400"></div>
+                    <div class="w-1/2 border-t-2 border-slate-400"></div>
+                </div>
+                <div class="flex justify-center items-center mb-4">
+                     <div class="text-2xl text-amber-500 font-bold transform -rotate-45">&darr;</div>
+                     <div class="flex-grow"></div>
+                     <div class="text-2xl text-amber-500 font-bold transform rotate-45">&darr;</div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold mb-4 text-slate-700">TRACE UPSTREAM</h3>
+                        <div class="space-y-4">
+                            <div class="strategy-node bg-slate-100 p-3 rounded-lg shadow">Trace Crypto to Consolidation Wallets</div>
+                            <div class="text-xl text-slate-400 font-bold">&darr;</div>
+                            <div class="strategy-node bg-slate-100 p-3 rounded-lg shadow">Cluster Wallets & Link to Agent</div>
+                             <div class="text-xl text-slate-400 font-bold">&darr;</div>
+                            <div class="strategy-node bg-red-100 border border-red-400 p-4 rounded-lg shadow">
+                                <h4 class="font-bold text-lg text-red-700">THE CORRUPT SOURCE</h4>
+                                <p class="text-sm text-red-600">(TargetX)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold mb-4 text-slate-700">TRACE DOWNSTREAM</h3>
+                         <div class="space-y-4">
+                            <div class="strategy-node bg-slate-100 p-3 rounded-lg shadow">Trace Crypto to Exit Points (Exchanges/OTCs)</div>
+                            <div class="text-xl text-slate-400 font-bold">&darr;</div>
+                            <div class="strategy-node bg-slate-100 p-3 rounded-lg shadow">Analyze Liquidator's KYC & Bank Records</div>
+                             <div class="text-xl text-slate-400 font-bold">&darr;</div>
+                            <div class="strategy-node bg-green-100 border border-green-400 p-4 rounded-lg shadow">
+                                <h4 class="font-bold text-lg text-green-700">THE MONEY LAUNDERER</h4>
+                                <p class="text-sm text-green-600">(Liquidator)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-slate-300">
+
+        <section id="legal" class="py-12">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">Legal Framework & Asset Recovery in Nepal</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">A successful prosecution depends on a strong understanding of Nepal's legal landscape regarding cryptocurrency and the procedures for asset recovery. All cryptocurrency activities are strictly prohibited, providing a clear basis for legal action.</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-amber-500">Relevant Laws</h3>
+                    <ul class="space-y-3 text-slate-600">
+                        <li><strong>Nepal Rastra Bank Act, 2002:</strong> Prohibits any currency transaction not approved by the central bank.</li>
+                        <li><strong>Foreign Exchange (Regulation) Act, 2019:</strong> Restricts foreign exchange, which includes crypto.</li>
+                        <li><strong>Act Restricting Investment Abroad, 1964:</strong> Prohibits foreign investment, including crypto purchases.</li>
+                    </ul>
+                    <div class="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                        <p class="font-bold">Severe Penalties:</p>
+                        <p>Violators face heavy fines, imprisonment, and full confiscation of assets.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-amber-500">Asset Recovery Process</h3>
+                    <ol class="space-y-3 list-decimal list-inside text-slate-600">
+                        <li><strong>Seizure:</strong> Once wallets are identified, law enforcement can legally seize the crypto assets. This may involve taking physical control of hardware wallets or compelling transfers.</li>
+                        <li><strong>Forfeiture:</strong> Follow legal procedures to have the seized assets officially forfeited to the state.</li>
+                        <li><strong>Repatriation:</strong> The recovered cryptocurrency can be liquidated, and the funds returned to the Government of Nepal's treasury.</li>
+                        <li><strong>"Whitened" Money:</strong> If funds have been moved back to fiat and invested in assets like real estate, traditional financial investigation is required to trace and seize these properties.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white text-center p-4 mt-12">
+        <p>&copy; 2025 Nepal Law Enforcement. For training purposes only.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+            const sections = document.querySelectorAll('main section');
+
+            function setActiveLink() {
+                let index = sections.length;
+                while(--index && window.scrollY + 100 < sections[index].offsetTop) {}
+                
+                navLinks.forEach((link) => link.classList.remove('active'));
+                if (navLinks[index]) {
+                   navLinks[index].classList.add('active');
+                   mobileNav.value = navLinks[index].getAttribute('href');
+                }
+            }
+
+            setActiveLink();
+            window.addEventListener('scroll', setActiveLink);
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+            
+            mobileNav.addEventListener('change', function(e) {
+                 document.querySelector(this.value).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+            });
+
+            const consensusCtx = document.getElementById('consensusChart').getContext('2d');
+            new Chart(consensusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Proof of Work (PoW)', 'Proof of Stake (PoS)'],
+                    datasets: [{
+                        label: 'Energy Consumption (Relative)',
+                        data: [95, 5],
+                        backgroundColor: ['#f59e0b'],
+                        borderColor: ['#b45309'],
+                        borderWidth: 1
+                    }, {
+                        label: 'Tendency Towards Centralization',
+                        data: [60, 75],
+                        backgroundColor: ['#475569'],
+                        borderColor: ['#1e293b'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                             ticks: {
+                                callback: function(value) {
+                                    return value + "%"
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    card.classList.toggle('is-flipped');
+                });
+            });
+            
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => {
+                        item.classList.remove('active', 'border-amber-500', 'text-amber-600');
+                        item.classList.add('border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300');
+                    });
+                    tab.classList.add('active', 'border-amber-500', 'text-amber-600');
+                    tab.classList.remove('border-transparent', 'text-slate-500');
+
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
